@@ -1,0 +1,121 @@
+
+#this function used to calculate the eulers value according to user choice h
+eulers <- function(h){
+#the initial value of this funciton
+  y=3.0
+  t=0.0
+  
+  time = vector("numeric", length = 2/h)
+  eulers_temp = vector("numeric", length = length(time))
+  
+  #this for loop is assign value to vector time and vector euler's estimate value
+  for(i in 1:length(time)){
+    #assign value to vector time
+    time[i] = t + h
+    fty = cos(4*t) - 2*y
+    #update t and y value to do the next calculation
+    t = time[i]
+    y = y + fty*h
+    #assign value to vector eulers_temp which represent estimate temperature by eulers method
+    eulers_temp[i]=round(y,3)
+  }
+  
+#create dataframe to contain euler's value
+  eulers_df <-data.frame(Time = time, Temp = eulers_temp)
+  return (eulers_df)
+}
+
+
+
+#this function used to calculate runge_kutta 4th value according to user choice h
+runge_kutta <-function(h){
+  #the initial value of this funciton
+  y = 3.0
+  t = 0.0
+  
+  time = vector("numeric", length = 2/h)
+  runge_temp = vector("numeric", length = length(time))
+  
+#this for loop assign value of vector time and runge_kutta's estimate value to vector  
+  for(i in 1:length(time)){
+    #assgn value to vector time
+    time[i] = t + h
+    
+    #calculate the value from k1 to k4
+    k1 = cos(4*t) - 2*y
+    k2 = cos(4*(t+1/2*h)) - 2*(y+1/2*k1*h)
+    k3 = cos(4*(t+1/2*h)) - 2*(y+1/2*k2*h)
+    k4 = cos(4*(t+h)) - 2*(y+k3*h)
+    
+    #update t value for next calculation
+    t =  time[i]
+    
+    #assign value for vector runge_temp which contains the estimate value of runge_kutta
+    runge_temp[i] =y + (k1 + 2*k2 + 2*k3 + k4)*h/6
+    
+    #update y value for next calculation
+    y = runge_temp[i]
+  }
+  runge_df <- data.frame(Time = time, Temp = runge_temp)
+  return (runge_df)
+}
+
+
+
+#this function calculate the exact temperature 
+f <- function(h){
+  t = h
+  actual_solution = 0.1 * cos(4 * t) + 0.2 * sin(4 * t) + 2.9 * exp(-2 * t)
+  actual_value = vector("numeric",length = 2/h)
+  
+  #this for loop calculate the actual value and assign to vector actual_value
+  for(i in 1:length(actual_value)){
+    
+    #assign value to actual_value vector which contains the actually value of the function
+    actual_value[i] = actual_solution
+   
+    #update the t value for next calculation
+    t = t + h
+    
+    #update the actual_solution's value for next calculation
+    actual_solution = 0.1 * cos(4 * t) + 0.2 * sin(4 * t) + 2.9 * exp(-2 * t)
+  }
+  return (actual_value)
+}
+
+
+
+ODESolver <-function( ){
+  
+  repeat{
+    cat("Choose the method for solving the ODE:\n",
+          "1. Euler's Method\n", 
+          "2. Runge-Kutta 4th Order Method\n")
+    userInput = as.integer(readline(prompt = ">"))
+    #if user input 1 to estimate value by Euler's method
+    if(userInput == 1){
+      h = as.numeric(readline(prompt = "Choose step size h (0.8, 0.2, 0.05)\n"))
+      solution = eulers(h)
+      #if user input 2 to estimate value by runge_kutta method
+    }else if(userInput == 2){
+      h = as.numeric(readline(prompt = "Choose step size h (0.8, 0.2, 0.05)\n"))
+      solution = runge_kutta(h)
+    }else{
+      print("Please input 1 or 2", quote = F)
+    }
+# create solution dataframe and round value to meet the requirement    
+    solution_df <- data.frame(
+      time <- solution$Time, 
+      actual_value <- round(f(h), 3),
+      estimate_value <- round(solution$Temp, 3),
+      ralative_err <- round(abs(solution$Temp-f(h))/f(h)*100, 2)
+    )
+  
+    #modify column names of DataFrame solution_df
+    colnames(solution_df) = c("Time (second)", "Exact Temp (C)", "Estimated Temp (C)", "Percentage Error (%)")
+    
+    print(solution_df)
+  }
+}
+
+ODESolver()
